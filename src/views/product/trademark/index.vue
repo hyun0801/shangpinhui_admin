@@ -1,6 +1,6 @@
 <template>
   <el-card>
-    <el-button type="primary" :icon="Plus" class="mb-20" @click="dialogFormVisible = true">添加品牌</el-button>
+    <el-button type="primary" :icon="Plus" class="mb-20" @click="saveTrademark">添加品牌</el-button>
     <!-- 表格部分开始 -->
     <el-table :data="trdemarkList" border>
       <el-table-column type="index" label="序号" width="80" align="center" />
@@ -14,13 +14,20 @@
         </template>
       </el-table-column>
       <el-table-column width="180" label="操作">
-        <el-button :icon="Edit" class="options-btn" type="warning"></el-button>
-        <el-button :icon="Delete" class="options-btn" type="danger"></el-button>
+        <!-- 使用作用域插槽 -->
+        <template #default="{ row }">
+          <el-button :icon="Edit" class="options-btn" type="warning" @click="EditTrademarkData(row)"></el-button>
+          <el-popconfirm title="您确认删除这条数据吗?" @confirm="confirmEvent(row)" @cancel="cancelEvent">
+            <template #reference>
+              <el-button :icon="Delete" class="options-btn" type="danger"></el-button>
+            </template>
+          </el-popconfirm>
+        </template>
       </el-table-column>
     </el-table>
     <!-- 表格部分结束 -->
     <!-- 模态框部分开始 -->
-    <el-dialog v-model="dialogFormVisible" title="添加品牌">
+    <el-dialog v-model="dialogFormVisible" :title="`${form.id ? '添加品牌' : '修改品牌'}`">
       <el-form label-width="100px" ref="trademarkFormRef" :model="form" :rules="rules">
         <el-form-item label="品牌名称" prop="tmName">
           <el-input class="trademark-input" v-model="form.tmName" />
@@ -90,8 +97,14 @@ import { Plus, Edit, Delete } from "@element-plus/icons-vue";
 import { onMounted, ref, reactive } from "vue";
 import { ElMessage, type UploadProps, type FormInstance } from "element-plus";
 //品牌管理相关的接口函数
-import { reqGetTrademarkList, reqAddTrademarkList } from "@/api/product/trdemark";
-import type { trademarkList } from "@/api/product/modules/trademarkModel";
+import {
+  reqGetTrademarkList,
+  reqAddTrademarkList,
+  reqUpdateTrademark,
+  reqDeleteTrademark,
+} from "@/api/product/trdemark";
+import type { trademarkItem, trademarkList } from "@/api/product/modules/trademarkModel";
+import { InfoFilled } from "@element-plus/icons-vue";
 /*****************************************分页器相关*************************************** */
 const currentPage = ref(1); //当前页
 const pageSize = ref(3); //每页记录数
@@ -140,7 +153,8 @@ const rules = reactive({
   logoUrl: [{ required: true, message: "请上传品牌logo", trigger: "blur" }],
 });
 //表单数据
-const form = reactive({
+const form = reactive<trademarkItem>({
+  id: 0, //品牌id
   tmName: "", //品牌名称
   logoUrl: "", //图片地址
 });
@@ -164,6 +178,15 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
   }
   return true;
 };
+//添加品牌按钮的事件回调
+const saveTrademark = () => {
+  //打开模态框
+  dialogFormVisible.value = true;
+  form.tmName = "";
+  form.logoUrl = "";
+  form.id = 0;
+  trademarkFormRef.value?.clearValidate(); // 清空表单校验结果
+};
 //添加品牌的事件回调
 const addTrademark = () => {
   //对整个表单的内容进行验证。
@@ -171,16 +194,48 @@ const addTrademark = () => {
     // valid为true，代表表单校验通过
     if (valid) {
       //   console.log("表单校验通过");
-      const { logoUrl, tmName } = form;
-      //表单校验通过后,发送请求添加品牌
-      await reqAddTrademarkList(logoUrl, tmName);
-      // 清空表单数据
-      trademarkFormRef.value?.resetFields();
-      ElMessage.success("添加成功");
+      const { logoUrl, tmName, id } = form;
+      //如果是添加品牌
+      if (id) {
+        //如果是修改品牌
+        await reqUpdateTrademark({
+          id,
+          logoUrl,
+          tmName,
+        });
+        ElMessage.success("修改成功");
+      } else {
+        //表单校验通过后,发送请求添加品牌
+        await reqAddTrademarkList(logoUrl, tmName);
+        // 清空表单数据
+        trademarkFormRef.value?.resetFields();
+        ElMessage.success("添加成功");
+      }
       //添加成功后,关闭模态框
       dialogFormVisible.value = false;
+      //调用函数,发送请求更新数据
+      getTrademarkList();
     }
   });
+};
+//修改品牌数据
+const EditTrademarkData = (row: trademarkItem) => {
+  //打开模态框
+  dialogFormVisible.value = true;
+  //设置表单数据
+  form.tmName = row.tmName; //品牌名称
+  form.logoUrl = row.logoUrl; //品牌LOGO
+  form.id = row.id; // 将来发送更新请求需要id
+};
+const confirmEvent = async (row: trademarkItem) => {
+  //发送请求删除数据
+  await reqDeleteTrademark(row.id as number);
+  ElMessage.success("删除成功!");
+  //调用函数,发送请求更新数据
+  getTrademarkList();
+};
+const cancelEvent = () => {
+  console.log("cancel!");
 };
 </script>
 

@@ -2,7 +2,7 @@
  * 这个文件是用来定义品牌管理的接口类型
  */
 //单个响应品牌的接口类型
-interface trademarkItem {
+export interface trademarkItem {
   id?: number //单个品牌的Id
   tmName: string //单个品牌的名字
   logoUrl: string //单个品牌的图片地址
