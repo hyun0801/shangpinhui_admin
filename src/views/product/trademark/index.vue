@@ -21,11 +21,11 @@
     <!-- 表格部分结束 -->
     <!-- 模态框部分开始 -->
     <el-dialog v-model="dialogFormVisible" title="添加品牌">
-      <el-form label-width="100px">
-        <el-form-item label="品牌名称">
+      <el-form label-width="100px" ref="trademarkFormRef" :model="form" :rules="rules">
+        <el-form-item label="品牌名称" prop="tmName">
           <el-input class="trademark-input" v-model="form.tmName" />
         </el-form-item>
-        <el-form-item label="品牌LOGO">
+        <el-form-item label="品牌LOGO" prop="logoUrl">
           <!-- 
                 模态框属性介绍
                     action:提交的目标服务器地址
@@ -51,7 +51,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="dialogFormVisible = false">关闭</el-button>
+          <el-button type="primary" @click="addTrademark">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -88,7 +88,7 @@ export default {
 <script lang="ts" setup>
 import { Plus, Edit, Delete } from "@element-plus/icons-vue";
 import { onMounted, ref, reactive } from "vue";
-import { ElMessage, type UploadProps } from "element-plus";
+import { ElMessage, type UploadProps, type FormInstance } from "element-plus";
 //品牌管理相关的接口函数
 import { reqGetTrademarkList } from "@/api/product/trdemark";
 import type { trademarkList } from "@/api/product/modules/trademarkModel";
@@ -129,6 +129,16 @@ const dialogFormVisible = ref(false); //是否显示 Dialog
 const imagesTypeList = ["image/jpeg", "image/jpg", "image/png"];
 //图片提交的地址
 const UPLOAD_URL_PREFIX = import.meta.env.VITE_API_URL;
+//获取表单组件实例对象
+const trademarkFormRef = ref<FormInstance>();
+//表单校验规则
+const rules = reactive({
+  tmName: [
+    { required: true, message: "请输入品牌名称", trigger: "blur" },
+    { min: 2, max: 20, message: "品牌名称应为两个字以上", trigger: "blur" },
+  ],
+  logoUrl: [{ required: true, message: "请上传品牌logo", trigger: "blur" }],
+});
 //表单数据
 const form = reactive({
   tmName: "", //品牌名称
@@ -139,6 +149,8 @@ const handleAvatarSuccess: UploadProps["onSuccess"] = (response) => {
   form.logoUrl = response.data;
   //   console.log(imageUrl.value);
   ElMessage.success("上传成功");
+  //图片上传成功清空表单校验
+  trademarkFormRef.value?.clearValidate(["logoUrl"]);
 };
 //上传文件之前的钩子，参数为上传的文件， 若返回false或者返回 Promise 且被 reject，则停止上传。
 const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
@@ -151,6 +163,19 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
     return false;
   }
   return true;
+};
+//添加品牌的事件回调
+const addTrademark = () => {
+  //对整个表单的内容进行验证。
+  trademarkFormRef.value?.validate((valid) => {
+    // valid为true，代表表单校验通过
+    if (valid) {
+      console.log("表单校验通过");
+      //表单校验通过,关闭模态框
+      dialogFormVisible.value = false;
+      console.log(form);
+    }
+  });
 };
 </script>
 
