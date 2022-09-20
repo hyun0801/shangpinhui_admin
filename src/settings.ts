@@ -2,7 +2,6 @@
 应用的一些默认设置信息
 */
 export default {
-
   /* 
   主界面左侧Logo标题
   */
@@ -16,6 +15,5 @@ export default {
   /* 
   是否显示主界面左侧Logo部分
   */
-  sidebarLogo: true
+  sidebarLogo: true,
 }
-

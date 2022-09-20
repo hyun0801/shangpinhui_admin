@@ -3,7 +3,6 @@ import {resolve} from 'path'
 
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
-
 // https://vitejs.dev/config/
 export default defineConfig((mode: ConfigEnv) => {
   const env = loadEnv(mode.mode, process.cwd());
@@ -39,5 +38,14 @@ export default defineConfig((mode: ConfigEnv) => {
         ],
       },
     },
+    server:{
+        proxy:{
+            "/app-dev": {
+                target: "http://gmall-h5-api.atguigu.cn", //目标服务器
+                changeOrigin: true,//是否允许跨域
+                rewrite: (path) => path.replace(/^\/app-dev/, ""),//是否需要路径重写,取决于接口地址中是否需要带
+            }
+        }
+    }
   };
 });
