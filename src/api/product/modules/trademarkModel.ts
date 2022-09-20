@@ -3,7 +3,7 @@
  */
 //单个响应品牌的接口类型
 interface trademarkItem {
-  id: number //单个品牌的Id
+  id?: number //单个品牌的Id
   tmName: string //单个品牌的名字
   logoUrl: string //单个品牌的图片地址
 }

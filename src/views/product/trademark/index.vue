@@ -90,7 +90,7 @@ import { Plus, Edit, Delete } from "@element-plus/icons-vue";
 import { onMounted, ref, reactive } from "vue";
 import { ElMessage, type UploadProps, type FormInstance } from "element-plus";
 //品牌管理相关的接口函数
-import { reqGetTrademarkList } from "@/api/product/trdemark";
+import { reqGetTrademarkList, reqAddTrademarkList } from "@/api/product/trdemark";
 import type { trademarkList } from "@/api/product/modules/trademarkModel";
 /*****************************************分页器相关*************************************** */
 const currentPage = ref(1); //当前页
@@ -167,13 +167,18 @@ const beforeAvatarUpload: UploadProps["beforeUpload"] = (rawFile) => {
 //添加品牌的事件回调
 const addTrademark = () => {
   //对整个表单的内容进行验证。
-  trademarkFormRef.value?.validate((valid) => {
+  trademarkFormRef.value?.validate(async (valid) => {
     // valid为true，代表表单校验通过
     if (valid) {
-      console.log("表单校验通过");
-      //表单校验通过,关闭模态框
+      //   console.log("表单校验通过");
+      const { logoUrl, tmName } = form;
+      //表单校验通过后,发送请求添加品牌
+      await reqAddTrademarkList(logoUrl, tmName);
+      // 清空表单数据
+      trademarkFormRef.value?.resetFields();
+      ElMessage.success("添加成功");
+      //添加成功后,关闭模态框
       dialogFormVisible.value = false;
-      console.log(form);
     }
   });
 };
